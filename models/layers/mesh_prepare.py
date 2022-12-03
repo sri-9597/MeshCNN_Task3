@@ -311,16 +311,30 @@ def extract_features(mesh):
     features = []
     edge_points = get_edge_points(mesh)
     set_edge_lengths(mesh, edge_points)
-    with np.errstate(divide='raise'):
-        try:
-            for extractor in [dihedral_angle, symmetric_opposite_angles, symmetric_ratios]:
-                feature = extractor(mesh, edge_points)
-                features.append(feature)
-            return np.concatenate(features, axis=0)
-        except Exception as e:
-            print(e)
-            raise ValueError(mesh.filename, 'bad features')
+    centroid_array = get_centroids(mesh, edge_points)
+    return centroid_array.T
+    # with np.errstate(divide='raise'):
+    #     try:
+    #         for extractor in [dihedral_angle, symmetric_opposite_angles, symmetric_ratios]:
+    #             feature = extractor(mesh, edge_points)
+    #             features.append(feature)
+    #         return np.concatenate(features, axis=0)
+    #     except Exception as e:
+    #         print(e)
+    #         raise ValueError(mesh.filename, 'bad features')
 
+def get_centroids(mesh, edge_points):
+    centroid_list = []
+    for i in range(edge_points.shape[0]):
+      p1, p2 = edge_points[i][0], edge_points[i][1]
+      x1, y1, z1 = mesh.vs[p1]
+      x2, y2, z2 = mesh.vs[p2]
+      x_cent = (x1+x2)/2
+      y_cent = (y1+y2)/2
+      z_cent = (z1+z2)/2
+      centroid_list.append([x_cent, y_cent, z_cent])
+    centroid_array = np.array(np.array(centroid_list))
+    return centroid_array
 
 def dihedral_angle(mesh, edge_points):
     normals_a = get_normals(mesh, edge_points, 0)
